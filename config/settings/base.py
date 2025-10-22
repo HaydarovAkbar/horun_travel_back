@@ -10,23 +10,26 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
 INSTALLED_APPS = [
     "jazzmin",
     # "unfold",
+    "modeltranslation",
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     # 3rd-party
-    'rest_framework', 'django_filters', 'drf_spectacular', 'corsheaders',
+    'rest_framework', 'drf_yasg', 'django_filters', 'drf_spectacular', 'corsheaders', "django_ckeditor_5",
     # local apps
-    'common', 'tours', 'pages', 'siteinfo', 'locations',
+    'common', 'tours', 'pages', 'siteinfo', 'locations', 'leads',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "django.middleware.locale.LocaleMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "core.middleware.APILanguageMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -55,6 +58,18 @@ TEMPLATES = [
 ]
 
 LANGUAGE_CODE = 'uz'
+
+LANGUAGES = [
+    ("uz", "Oʻzbekcha"),
+    ("ru", "Русский"),
+    ("en", "English"),
+]
+
+# ModelTranslation sozlamalari
+MODELTRANSLATION_DEFAULT_LANGUAGE = "uz"
+MODELTRANSLATION_LANGUAGES = ("uz", "ru", "en")
+MODELTRANSLATION_FALLBACK_LANGUAGES = ("uz", "en", "ru")  # topilmasa qaysi tilga qaytish
+
 TIME_ZONE = 'Asia/Tashkent'
 USE_I18N = True
 USE_TZ = True
@@ -94,3 +109,92 @@ JAZZMIN_SETTINGS = {
 #     "SITE_HEADER": "Horun Travel",
 #     "SHOW_HISTORY": True,
 # }
+
+CKEDITOR_5_UPLOADS_DIRECTORY = "uploads/ckeditor5/"
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "bold", "italic", "underline", "|",
+            "bulletedList", "numberedList", "outdent", "indent", "|",
+            "link", "blockQuote", "insertTable", "|",
+            "undo", "redo", "removeFormat", "|",
+            "mediaEmbed", "codeBlock", "horizontalLine", "specialCharacters",
+        ],
+        "language": "uz",
+    },
+    # Matn uzunroq joylarda biroz keng toolbar
+    "long": {
+        "toolbar": [
+            "heading", "|", "bold", "italic", "underline", "strikethrough",
+            "bulletedList", "numberedList", "todoList", "outdent", "indent", "|",
+            "link", "blockQuote", "insertTable", "mediaEmbed", "|",
+            "undo", "redo", "code", "codeBlock", "horizontalLine", "removeFormat", "|",
+            "specialCharacters", "subscript", "superscript"
+        ],
+        "language": "uz",
+    },
+}
+# CKEDITOR_5_USER_GROUPS = {
+#     "default": {
+#         "allow_all": True,
+#         "groups": ["Editors", "Admins"],  # faqat shu guruhlar yuklay oladi
+#     }
+# }
+
+# DRF
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.MultiPartParser",
+        "rest_framework.parsers.FormParser",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+        # Keyinchalik JWT qo‘shish mumkin
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",  # prod’da kerakli joylarda o‘zgartirasiz
+    ],
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 12,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",  # ariza/contact POST uchun qo‘shimcha throttle ko‘rsatamiz
+        "user": "120/min",
+        "applications": "10/min",
+        "contacts": "20/min",
+    },
+}
+
+# Email jo'natish uchun
+DEFAULT_FROM_EMAIL = "noreply@horuntravel.com"
+
+# Adminlarga boradigan qabul qiluvchilar (bir nechta bo‘lishi mumkin)
+NOTIFY_EMAILS = ["info@horuntravel.com"]
+
+# Devda test qilish uchun (konsolga chiqaradi), prod’da SMTP qo‘ying
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# PROD misol:
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = "smtp.yandex.com"
+# EMAIL_PORT = 465
+# EMAIL_USE_SSL = True
+# EMAIL_HOST_USER = "info@horuntravel.com"
+# EMAIL_HOST_PASSWORD = "parol"
+
+# (Ixtiyoriy) Telegram sozlamalari — bo‘lsa yuboradi, bo‘lmasa skip
+TELEGRAM_BOT_TOKEN = "8317871106:AAFR5vEo4AP3nT4ZDtQvj8-myNvXRYqZs6M"  # "123456:ABC..."
+TELEGRAM_ADMIN_CHAT_ID = "758934089"  # "-100123456789" yoki "123456789"

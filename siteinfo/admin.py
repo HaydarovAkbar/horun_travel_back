@@ -1,14 +1,18 @@
+# siteinfo/admin.py
 from django.contrib import admin
 from django.utils.html import format_html
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django import forms
+
+from django_ckeditor_5.widgets import CKEditor5Widget
+from modeltranslation.admin import TabbedTranslationAdmin, TranslationTabularInline
 
 from .models import (
     SiteSettings, ContactChannel, SocialLink,
     Location, WorkingHour,
+    AboutPage, AboutSection, ContactPage,
 )
-from locations.models import Country, City
-
 
 # --------- Umumiy actions ---------
 @admin.action(description="Faollashtirish")
@@ -46,8 +50,7 @@ class SocialLinkInline(admin.TabularInline):
 class LocationInline(admin.TabularInline):
     """
     SiteSettings ichida lokatsiyalarni ko‘rsatamiz.
-    Ish vaqtlari (WorkingHour) nested-inline bo‘la olmaydi, shuning uchun
-    `show_change_link=True` bilan alohida sahifasiga o‘tamiz.
+    WorkingHour nested bo‘lolmaydi, shuning uchun show_change_link bilan alohida sahifaga o‘tamiz.
     """
     model = Location
     extra = 0
@@ -97,13 +100,13 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         }),
     )
 
-    # Singleton xatti-harakatlari: bitta yozuvdan ko‘piga ruxsat bermaslik
+    # Singleton: bitta yozuvdan ko‘piga ruxsat bermaymiz
     def has_add_permission(self, request):
         if SiteSettings.objects.exists():
             return False
         return super().has_add_permission(request)
 
-    # List sahifasidan to‘g‘ridan-to‘g‘ri o‘sha bitta yozuvga o‘tkazish (UX uchun)
+    # List sahifasidan darrov change sahifasiga yo‘naltiramiz
     def changelist_view(self, request, extra_context=None):
         obj = SiteSettings.get_solo()
         return HttpResponseRedirect(
@@ -160,7 +163,7 @@ class LocationAdmin(admin.ModelAdmin):
         return obj.name or (obj.city.name if obj.city_id else obj.country.name)
 
 
-# --------- ContactChannel (alohida boshqarish ham qulay bo‘lsin) ---------
+# --------- ContactChannel ---------
 @admin.register(ContactChannel)
 class ContactChannelAdmin(admin.ModelAdmin):
     list_display = ("type", "label", "value", "is_primary", "order", "is_active", "updated_at")
@@ -186,7 +189,7 @@ class SocialLinkAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
 
-# --------- WorkingHour (ixtiyoriy: alohida ro‘yxatda ko‘rish uchun) ---------
+# --------- WorkingHour ---------
 @admin.register(WorkingHour)
 class WorkingHourAdmin(admin.ModelAdmin):
     list_display = ("location", "weekday", "closed", "open_time", "close_time", "order", "is_active", "updated_at")
@@ -196,4 +199,66 @@ class WorkingHourAdmin(admin.ModelAdmin):
     ordering = ("location", "weekday", "order", "id")
     actions = [make_active, make_inactive, soft_delete, restore]
     list_per_page = 50
+    readonly_fields = ("created_at", "updated_at")
+
+
+# --------- CKEditor + Tabbed Translation (About/Contact) ---------
+LANGS = ("uz", "ru", "en")
+
+def ck_widgets(*bases, cfg="long"):
+    w = {}
+    for b in bases:
+        for lang in LANGS:
+            w[f"{b}_{lang}"] = CKEditor5Widget(config_name=cfg)
+    return w
+
+# ----- About -----
+class AboutPageForm(forms.ModelForm):
+    class Meta:
+        model = AboutPage
+        fields = "__all__"
+        widgets = {
+            **ck_widgets("hero_title", "hero_subtitle", cfg="default"),
+            **ck_widgets("meta_title", "meta_description", cfg="default"),
+        }
+
+class AboutSectionInlineForm(forms.ModelForm):
+    class Meta:
+        model = AboutSection
+        fields = "__all__"
+        widgets = {
+            **ck_widgets("title", cfg="default"),
+            **ck_widgets("body", cfg="long"),
+        }
+
+class AboutSectionInline(TranslationTabularInline):  # <-- TUZATILDI
+    model = AboutSection
+    form = AboutSectionInlineForm
+    extra = 0
+    ordering = ("order", "id")
+    fields = ("order", "title", "body", "image", "is_active")
+    classes = ("collapse",)
+
+@admin.register(AboutPage)
+class AboutPageAdmin(TabbedTranslationAdmin):  # Tabbed UI parentda bo'ladi
+    form = AboutPageForm
+    inlines = [AboutSectionInline]
+    list_display = ("__str__", "updated_at")
+    readonly_fields = ("created_at", "updated_at")
+
+
+# ----- Contact -----
+class ContactPageForm(forms.ModelForm):
+    class Meta:
+        model = ContactPage
+        fields = "__all__"
+        widgets = {
+            **ck_widgets("hero_title", "hero_subtitle", cfg="default"),
+            **ck_widgets("intro_html", "meta_title", "meta_description", cfg="long"),
+        }
+
+@admin.register(ContactPage)
+class ContactPageAdmin(TabbedTranslationAdmin):
+    form = ContactPageForm
+    list_display = ("__str__", "updated_at")
     readonly_fields = ("created_at", "updated_at")
