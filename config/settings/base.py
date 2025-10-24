@@ -5,7 +5,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='dev-not-secure')
 DEBUG = config('DEBUG', cast=bool, default=True)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+ALLOWED_HOSTS = [
+    "horuntravel.com",
+    "www.horuntravel.com",
+    "127.0.0.1",  # health-check yoki lokal test uchun
+    "localhost",
+]
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Admin/CSRF uchun
+CSRF_TRUSTED_ORIGINS = [
+    "https://horuntravel.com",
+    "https://www.horuntravel.com",
+
+]
 
 INSTALLED_APPS = [
     "jazzmin",
@@ -14,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     # 3rd-party
-    'rest_framework', 'drf_yasg', 'django_filters', 'drf_spectacular', 'corsheaders', "django_ckeditor_5",
+    'rest_framework', 'django_filters', 'drf_spectacular', 'corsheaders', "django_ckeditor_5",
     # local apps
     'common', 'tours', 'pages', 'siteinfo', 'locations', 'leads',
 ]
@@ -75,24 +88,38 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'static'
+# STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_ROOT = "/var/www/horuntravel/static"
+MEDIA_ROOT  = "/var/www/horuntravel/media"
 
 CORS_ALLOW_ALL_ORIGINS = True  # prod’da domen bilan cheklaysiz
 
-REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 12,
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+#     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+#     'PAGE_SIZE': 12,
+# }
+
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Horun Travel API',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "Horun Travel API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,  # /api/schema/ dan tashqari UI’lar schema’ni ichidan olmaydi
+
+    # Swagger/Redoc sahifalarini hammaga ochish:
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_AUTHENTICATION": [],
+
+    # (ixtiyoriy) Bearer auth tugmasi
+    "SWAGGER_UI_SETTINGS": {
+        "persistAuthorization": True,
+    },
+    "COMPONENT_SPLIT_REQUEST": True,
 }
+
 
 JAZZMIN_SETTINGS = {
     "site_title": "Horun Travel Admin",
@@ -143,6 +170,7 @@ CKEDITOR_5_CONFIGS = {
 
 # DRF
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -198,3 +226,9 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # (Ixtiyoriy) Telegram sozlamalari — bo‘lsa yuboradi, bo‘lmasa skip
 TELEGRAM_BOT_TOKEN = "8317871106:AAFR5vEo4AP3nT4ZDtQvj8-myNvXRYqZs6M"  # "123456:ABC..."
 TELEGRAM_ADMIN_CHAT_ID = "758934089"  # "-100123456789" yoki "123456789"
+
+# # reverse-proxy orqasida https-ni to‘g‘ri tanish uchun
+# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+#
+# # admin & CSRF
+# CSRF_TRUSTED_ORIGINS = ["https://horuntravel.com", "https://www.horuntravel.com"]

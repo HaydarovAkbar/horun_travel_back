@@ -47,7 +47,7 @@ class TourListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tour
-        fields = ["id", "slug", "title", "category", "days", "base_price", "currency",
+        fields = ["id", "slug", "title", "category", "days", "base_price", "currency", 'short_description',
                   "discount_percent", "discount_amount", "price_after_discount", "is_featured", "cover"]
 
     def get_cover(self, obj):
