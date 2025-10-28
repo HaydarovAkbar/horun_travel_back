@@ -5,9 +5,9 @@ from .models import TourCategory, TourTag, Tour, ItineraryDay, TourImage, TourVi
 class TourCategoryTR(TranslationOptions):
     fields = ("name",)
 
-@register(TourTag)
-class TourTagTR(TranslationOptions):
-    fields = ("name",)
+# @register(TourTag)
+# class TourTagTR(TranslationOptions):
+#     fields = ("name",)
 
 @register(Tour)
 class TourTR(TranslationOptions):

@@ -175,7 +175,7 @@ class TourCategoryAdmin(TabbedTranslationAdmin, admin.ModelAdmin):
     ordering = ("order", "name")
 
 @admin.register(TourTag)
-class TourTagAdmin(TabbedTranslationAdmin, admin.ModelAdmin):
+class TourTagAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "is_active", "updated_at")
     search_fields = ("^name", "^slug")
     prepopulated_fields = {"slug": ("name",)}
